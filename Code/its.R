@@ -15,12 +15,13 @@ its_biweekly_SENSITIVITY <- base_descriptive %>%
          postintervention1_time = ifelse(row_number() >= 41,
                                          row_number() -40,
                                          0),
-         #SECOND INTERVENTION - when scheduling decision comes into force
+         #THIRD INTERVENTION - when scheduling decision comes into force
          intervention2 = case_when(time <68 ~ 0,
                                    T ~ 1),
          postintervention2_time = ifelse(row_number() >= 68,
                                          row_number() -67,
                                          0),
+         #SECOND INTERVENTION - when PRC banned bromazolam domestically
          interventionSENSITIVITY = case_when(time <57 ~ 0,
                                              T ~ 1),
          postintervention_time_SENSITIVITY = ifelse(row_number() >=57,
@@ -41,8 +42,10 @@ plot(decompose(bromaz_ts_biweekly))
 #Grabbing predictors 
 its_predictors_biweekly_SENSITIVITY <- its_biweekly_SENSITIVITY %>% 
   select(time, intervention1, postintervention1_time, interventionSENSITIVITY, postintervention_time_SENSITIVITY, intervention2, postintervention2_time)
+
 ###################################
 #MODELLING
+#This code returns the best ARIMA model according to specified criteria (in our case BIC) out of all possible models, within the order constraints provided
 model_SENSITIVITY <- forecast::auto.arima(bromaz_ts_biweekly,
                               seasonal = T,
                               xreg = as.matrix(its_predictors_biweekly_SENSITIVITY),
@@ -55,10 +58,11 @@ model_SENSITIVITY <- forecast::auto.arima(bromaz_ts_biweekly,
                               max.d = 30)
 
 summary(model_SENSITIVITY)
-#The auto.arima function automates a lot, but remember to check the diagnostics plots generated from the final model. It’s a good idea to verify that the model’s residuals are not autocorrelated and meet necessary assumptions.
-#Using the final ARIMA selected, the R code below uses the arima() function to fit that model into an arima object (easier for R to use).
+
 #the model indicates p = 0, d = 0, q = 1 (indicating no lag dependence, stationarity and a moving average of 1)
 arma_orders_SENSITIVITY <- forecast::arimaorder(model_SENSITIVITY)
+
+#Using the final ARIMA selected, the R code below uses the arima() function to fit that model into an arima object (easier for R to use).
 arima_model_SENSITIVITY <- 
   arima(
     bromaz_ts_biweekly,
@@ -68,7 +72,7 @@ arima_model_SENSITIVITY <-
 #coefficients
 broom::tidy(arima_model_SENSITIVITY, conf.int = T, conf.level = .95)
 
-#diagnostics - there is evidence of validity!
+#diagnostics - The auto.arima function automates a lot, but remember to check the diagnostics plots generated from the final model. It’s a good idea to verify that the model’s residuals are not autocorrelated and meet necessary assumptions.
 #Box-Ljung test for normality
 forecast::checkresiduals(arima_model_SENSITIVITY)
 
@@ -80,4 +84,4 @@ hist(residuals(arima_model_SENSITIVITY))
 
 # Kolmogorov-Smirnov test for residual independence 
 ks.test(residuals(arima_model_SENSITIVITY), 'pnorm', mean = mean(residuals(arima_model_SENSITIVITY)), sd = sd(residuals(arima_model_SENSITIVITY)))
-
+#there is evidence of validity!
