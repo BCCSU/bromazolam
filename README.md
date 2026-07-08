@@ -1,2 +1,2 @@
-# bromazolam
-Code used to conduct analysis of bromazolam detected in expected opioid samples at drug checking services
+# Impact of drug scheduling on detection of bromazolam in the unregulated opioid supply: an interrupted time series
+Code and materials related to completion of bromazolam manuscript (currently in peer-review)
