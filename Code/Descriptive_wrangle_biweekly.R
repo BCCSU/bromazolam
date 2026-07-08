@@ -1,5 +1,5 @@
 library(tidyverse)
-
+ 
 #Reading in main dataset, creating a flag for first half of month and second half
 # basedata_biweekly <- read_csv('BC_Main_Data_Report_01-Jan-2019_To_31-Oct-2025.csv') %>%
 basedata_biweekly <- read_csv('BC_Main_Data_Report_01-Jan-2019_To_28-Feb-2026.csv') %>%
