@@ -65,7 +65,7 @@ supp1 <- sites_samples %>%
   geom_text(aes(x = as.Date('2024-9-15'), y = 23.5, label = "PRC\nscheduling\nin force"), size =4, color = "black") + 
   geom_text(aes(x = as.Date('2025-05-01'), y = 23.5, label = "UNODC/CND\nscheduling\nin force"), size =4, color = "black")
 
-ggsave('DAD/supp1.png', height = 5, width = 9, units = 'in', dpi = 600)
+ggsave('Outputs/supp1.png', height = 5, width = 9, units = 'in', dpi = 600)
 ####################################################################################################
 #Creating a plot of number of samples by health authority (and overall)
 bind_rows(
@@ -116,4 +116,4 @@ basedata_biweekly %>%
   geom_text(aes(x = as.Date('2025-05-01'), y = 1400, label = "UNODC/CND\nscheduling\nin force"), size =4, color = "black") +
   scale_y_continuous(limits = c(0, 1500))
 
-ggsave('DAD/supp4.png', height = 5, width = 9, units = 'in', dpi = 600)
+ggsave('Outputs/supp2.png', height = 5, width = 9, units = 'in', dpi = 600)
