@@ -67,7 +67,7 @@ benzo_list <- c(
 )
 ######################################################
 #all expected opioid samples where there was a benzo 
-benzo_pos_biweekly <- basedata_biweekly %>% 
+test <- basedata_biweekly %>% 
   group_by(`Sample ID`) %>% 
   filter(
     (`Test Type` == "BENZO" & Results == "POS") |
@@ -78,22 +78,73 @@ benzo_pos_biweekly <- basedata_biweekly %>%
       (`Test Type` == "FTIR 5" & (Results %in% benzo_list)) |
       (`Test Type` == "FTIR 6" & (Results %in% benzo_list))
   ) %>% 
-  distinct(`Sample ID`, .keep_all = T) %>% 
   ungroup() %>% 
-  mutate(Results2 = case_when(!str_detect(Results, "Bromazolam|Etizolam|Desalkylgidazepam|POS") ~ 'Any other benzo',
-                              T ~ Results))
+  filter(monthyear >= '2022-03-01')
 
-#creating a baseline descriptivedataset
-base_descriptive <- benzo_pos_biweekly %>% 
-  group_by(monthyear, monthcat, Results2) %>% 
-  summarise(total = n()) %>% 
-  pivot_wider(names_from = Results2, values_from = total) %>% 
+#Apparently there are some duplicate records, identified below
+test %>% 
+  dplyr::summarise(n = dplyr::n(), .by = c(`Visit Date`, `Sample ID`, Drug, Category, monthyear, monthcat, `Test Type`)) %>% 
+  dplyr::filter(n > 1L) %>% View()
+
+#Subsets dataframe, retains unique values, and pivots to wide format
+benzopos <- test %>% 
+  select(`Sample ID`, Drug, Category, `Test Type`, Results, monthyear, visitdate, monthcat, `Health Authority`) %>% 
+  unique() %>% 
+  pivot_wider(names_from = `Test Type`, values_from = Results) %>% 
+  arrange(visitdate) %>% 
+  select(1:7, `FTIR 1`, `FTIR 2`, everything()) %>% 
+  mutate(POS = case_when(BENZO == 'POS' & if_all(starts_with('FTIR'), ~ is.na(.)) ~ 1 ,
+                                T ~ 0),
+         Bromazolam = case_when(if_any(starts_with('FTIR'), ~ str_detect(., 'Bromazolam')) ~ 1,
+                                T~0),
+         Etizolam = case_when(if_any(starts_with('FTIR'), ~ str_detect(., 'Etizolam')) ~ 1,
+                                T~0),
+         Desalkylgidazepam = case_when(if_any(starts_with('FTIR'), ~ str_detect(., 'Desalkylgidazepam')) ~ 1,
+                                T~0),
+         Anyother = case_when(if_any(starts_with('FTIR'), ~ . %in% benzo_list[-c(4, 7, 13)]) ~ 1,
+                              T ~0),
+         ANYNA = case_when(is.na(BENZO) & if_all(starts_with('FTIR'), ~ is.na(.)) ~ 'YES',
+                           T ~ 'NO'))
+###############################################################################
+#Defining a function to extract and concatenate data on individual compounds
+extractfun <- function(df, cat) {
+  
+  cat_name <- deparse(substitute(cat))
+  
+  df %>% 
+    left_join(
+      (benzopos %>% 
+         group_by(monthyear, monthcat, {{cat}}) %>% 
+         summarise("{cat_name}count" := n()) %>% 
+         filter({{cat}} == 1) %>% 
+         select(-{{cat}})),
+      by = c('monthyear', 'monthcat'))
+}
+##########################################################################
+#Merging expected opioids dataframe with individual dataframes corresponding with benzos overall and specific compounds
+revised <- left_join(
+  
+  exp_opioids_biweekly,
+  
+  (benzopos %>%
+     group_by(monthyear, monthcat) %>%
+     summarise(BENZOTOTAL = n())),
+  by = c('monthyear', 'monthcat')
+  
+) %>% 
+  
+  filter(monthyear >= '2022-03-01') %>% 
+  
+  #Applying extraction function for each compound/category
+  extractfun(POS) %>%
+  extractfun(Bromazolam) %>% 
+  extractfun(Desalkylgidazepam) %>% 
+  extractfun(Etizolam) %>% 
+  extractfun(Anyother) %>% 
+  
   replace(is.na(.), 0) %>% 
-  left_join(exp_opioids_biweekly, by = c('monthyear', 'monthcat')) %>% 
-  mutate(BENZOTOTAL = sum(Etizolam + POS + `Any other benzo` + Bromazolam + Desalkylgidazepam),
-         benzoprop = round(BENZOTOTAL/exp_opioid_samples*100,1),
-         `Bromazolam ` = round(Bromazolam/exp_opioid_samples*100,1),
-         `Desalkylgidazepam ` = round(Desalkylgidazepam/exp_opioid_samples*100,1),
-         #flualprop = round(Flualprazolam/exp_opioid_samples*100,1),
-         `Etizolam ` = round(Etizolam/exp_opioid_samples*100,1),
-         `Any other benzodiazepine` = round(`Any other benzo`/exp_opioid_samples*100,1)) 
+  mutate(benzototal = round(BENZOTOTAL/exp_opioid_samples*100,1),
+         bromazprop = round(Bromazolamcount/exp_opioid_samples*100,1),
+         desalkylprop = round(Desalkylgidazepamcount/exp_opioid_samples*100,1),
+         etizolamprop = round(Etizolamcount/exp_opioid_samples*100,1),
+         Anyotherprop = round(Anyothercount/exp_opioid_samples*100,1)) 
