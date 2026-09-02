@@ -31,7 +31,7 @@ fig1 <- revised %>%
   geom_text(aes(x = 62.5, y = 800, label = "PRC\nscheduling\nin force"), size =4, color = "black") + 
   geom_text(aes(x = 80, y = 800, label = "UNODC/CND\n scheduling\nin force"), size =4, color = "black")
 
-ggsave("DAD/Fig1_DAD_revised.png", plot = fig1, width = 9, height = 6, dpi = 600)
+ggsave("Outputs/Fig1_DAD_revised.png", plot = fig1, width = 9, height = 6, dpi = 600)
 
 #################################################################################
 
@@ -66,7 +66,7 @@ fig1_revised <- its_biweekly_FINAL_REVISED %>%
   geom_text(aes(x = 62.5, y = 21, label = "PRC\nscheduling\nin force"), size =4, color = "black") + 
   geom_text(aes(x = 80, y = 22, label = "UNODC/CND\nscheduling\nin force"), size =4, color = "black")
 
-ggsave("DAD/Fig2_DAD_revised.png", plot = fig2, width = 9, height = 5, dpi = 600)
+ggsave("Outputs/Fig2_DAD_revised.png", plot = fig2, width = 9, height = 5, dpi = 600)
 
 #################################################################################
 #figure3 alone
@@ -99,4 +99,4 @@ fig3 <- revised %>%
   guides(colour = guide_legend(reverse = T),
          linetype = guide_legend(reverse = T))
 
-ggsave("DAD/Fig3_DAD_revised.png", plot = fig3, width = 9, height = 5, dpi = 600)
+ggsave("Outputs/Fig3_DAD_revised.png", plot = fig3, width = 9, height = 5, dpi = 600)
